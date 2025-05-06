@@ -81,28 +81,45 @@ def logout_view(request):
     return redirect('home')
 
 def verify_email(request, token):
+    # Получаем токен и email из сессии
+    stored_token = request.session.get('email_verification_token')
+    email = request.session.get('email_verification_email')
+    sent_time_str = request.session.get('email_verification_sent')
+    
+    if not stored_token or stored_token != token:
+        messages.error(request, 'Недействительная ссылка подтверждения.')
+        return redirect('login')
+    
     try:
-        profile = Profile.objects.get(email_verification_token=token)
-        user = profile.user
+        # Находим пользователя по email
+        user = CustomUser.objects.get(email=email)
         
         # Проверка срока действия токена (24 часа)
-        if timezone.now() - profile.email_verification_sent > timedelta(hours=24):
-            messages.error(request, 'Срок действия ссылки истек. Запросите новую ссылку.')
-            return redirect('resend_verification')
+        if sent_time_str:
+            from datetime import datetime
+            sent_time = datetime.fromisoformat(sent_time_str)
+            # Преобразуем sent_time и timezone.now() к UTC для корректного сравнения
+            if timezone.now() - sent_time > timedelta(hours=24):
+                messages.error(request, 'Срок действия ссылки истек. Запросите новую ссылку.')
+                return redirect('resend_verification')
         
+        # Активируем пользователя
         user.is_active = True
         user.save()
         
-        # Очистка токена
-        profile.email_verification_token = ''
-        profile.email_verified = True
-        profile.save()
+        # Очищаем данные верификации из сессии
+        if 'email_verification_token' in request.session:
+            del request.session['email_verification_token']
+        if 'email_verification_email' in request.session:
+            del request.session['email_verification_email']
+        if 'email_verification_sent' in request.session:
+            del request.session['email_verification_sent']
         
         messages.success(request, 'Ваш email успешно подтвержден! Теперь вы можете войти в систему.')
         return redirect('login')
     
-    except Profile.DoesNotExist:
-        messages.error(request, 'Недействительная ссылка подтверждения.')
+    except CustomUser.DoesNotExist:
+        messages.error(request, 'Пользователь с таким email не найден.')
         return redirect('login')
 
 def verify_phone(request):

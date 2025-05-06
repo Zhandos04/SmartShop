@@ -26,3 +26,134 @@ Traceback (most recent call last):
     sock.connect(sa)
 ConnectionRefusedError: [Errno 111] Connection refused
 ERROR 2025-05-06 19:36:23,512 basehttp "POST /accounts/register/ HTTP/1.0" 500 108199
+ERROR 2025-05-06 19:46:48,359 log Internal Server Error: /accounts/verify-email/Pb5lVrtl7x5fOamKoLMqswDwfwhZHvzOk4HFEp95r2j20nDqsJFITQ5aKWEevP6Y/
+Traceback (most recent call last):
+  File "/app/apps/accounts/views.py", line 85, in verify_email
+    profile = Profile.objects.get(email_verification_token=token)
+NameError: name 'Profile' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/app/apps/accounts/views.py", line 104, in verify_email
+    except Profile.DoesNotExist:
+NameError: name 'Profile' is not defined
+ERROR 2025-05-06 19:46:48,370 basehttp "GET /accounts/verify-email/Pb5lVrtl7x5fOamKoLMqswDwfwhZHvzOk4HFEp95r2j20nDqsJFITQ5aKWEevP6Y/ HTTP/1.0" 500 68786
+ERROR 2025-05-06 19:49:24,866 log Internal Server Error: /accounts/verify-email/Pb5lVrtl7x5fOamKoLMqswDwfwhZHvzOk4HFEp95r2j20nDqsJFITQ5aKWEevP6Y/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/app/apps/accounts/views.py", line 100, in verify_email
+    if timezone.now() - timezone.make_aware(sent_time) > timedelta(hours=24):
+  File "/usr/local/lib/python3.10/site-packages/django/utils/timezone.py", line 291, in make_aware
+    raise ValueError("make_aware expects a naive datetime, got %s" % value)
+ValueError: make_aware expects a naive datetime, got 2025-05-06 14:45:47.550366+00:00
+ERROR 2025-05-06 19:49:24,884 basehttp "GET /accounts/verify-email/Pb5lVrtl7x5fOamKoLMqswDwfwhZHvzOk4HFEp95r2j20nDqsJFITQ5aKWEevP6Y/ HTTP/1.0" 500 70202
+ERROR 2025-05-06 19:52:03,250 log Internal Server Error: /accounts/verify-email/w9Ivwdbj2TXIcf0dbNyIrTDjt08QRhwLnBxkM9qz1KgTNz0wL0pdP7TaBQRywBt0/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/app/apps/accounts/views.py", line 100, in verify_email
+    if timezone.now() - timezone.make_aware(sent_time) > timedelta(hours=24):
+  File "/usr/local/lib/python3.10/site-packages/django/utils/timezone.py", line 291, in make_aware
+    raise ValueError("make_aware expects a naive datetime, got %s" % value)
+ValueError: make_aware expects a naive datetime, got 2025-05-06 14:51:53.238941+00:00
+ERROR 2025-05-06 19:52:03,260 basehttp "GET /accounts/verify-email/w9Ivwdbj2TXIcf0dbNyIrTDjt08QRhwLnBxkM9qz1KgTNz0wL0pdP7TaBQRywBt0/ HTTP/1.0" 500 70201
+ERROR 2025-05-06 19:55:32,743 log Internal Server Error: /orders/my-orders/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/app/apps/orders/views.py", line 154, in my_orders
+    return render(request, 'orders/my_orders.html', {'orders': orders})
+  File "/usr/local/lib/python3.10/site-packages/django/shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/usr/local/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/usr/local/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: orders/my_orders.html
+ERROR 2025-05-06 19:55:32,762 basehttp "GET /orders/my-orders/ HTTP/1.0" 500 84401
+ERROR 2025-05-06 19:57:20,360 log Internal Server Error: /accounts/profile/addresses/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/app/apps/accounts/views.py", line 289, in address_list
+    return render(request, 'accounts/address_list.html', {'addresses': addresses})
+  File "/usr/local/lib/python3.10/site-packages/django/shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/usr/local/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/usr/local/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: accounts/address_list.html
+ERROR 2025-05-06 19:57:20,371 basehttp "GET /accounts/profile/addresses/ HTTP/1.0" 500 84285
+ERROR 2025-05-06 19:58:16,330 log Internal Server Error: /wishlist/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/app/apps/products/views.py", line 239, in wishlist
+    return render(request, 'products/wishlist.html', context)
+  File "/usr/local/lib/python3.10/site-packages/django/shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/usr/local/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/usr/local/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: products/wishlist.html
+ERROR 2025-05-06 19:58:16,343 basehttp "GET /wishlist/ HTTP/1.0" 500 84402
+ERROR 2025-05-06 19:59:26,325 log Internal Server Error: /notifications/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/app/apps/notifications/views.py", line 14, in notification_list
+    return render(request, 'notifications/notification_list.html', {
+  File "/usr/local/lib/python3.10/site-packages/django/shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/usr/local/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/usr/local/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: notifications/notification_list.html
+ERROR 2025-05-06 19:59:26,337 basehttp "GET /notifications/ HTTP/1.0" 500 84536
+ERROR 2025-05-06 20:00:38,054 log Internal Server Error: /notifications/settings/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/app/apps/notifications/views.py", line 66, in notification_settings
+    return render(request, 'notifications/notification_settings.html', {'form': form})
+  File "/usr/local/lib/python3.10/site-packages/django/shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/usr/local/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/usr/local/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: notifications/notification_settings.html
+ERROR 2025-05-06 20:00:38,062 basehttp "GET /notifications/settings/ HTTP/1.0" 500 84323
