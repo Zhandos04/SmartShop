@@ -1,7 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import AIConversation, AIMessage
+from apps.chat.models import AIConversation, AIMessage
 from .utils import chat_with_ai_assistant
 
 class AIAssistantConsumer(AsyncWebsocketConsumer):

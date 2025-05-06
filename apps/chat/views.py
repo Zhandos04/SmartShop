@@ -56,7 +56,7 @@ def start_chat(request):
         
         if not message_text:
             messages.error(request, 'Введите сообщение')
-            return redirect('product_detail', product_id=product_id)
+            return redirect('product_detail_by_id', product_id=product_id)  # Исправлено здесь
         
         # Проверяем, существует ли продукт и продавец
         product = get_object_or_404(Product, id=product_id)
@@ -65,7 +65,7 @@ def start_chat(request):
         # Если пользователь пытается написать сам себе
         if seller == request.user:
             messages.error(request, 'Вы не можете написать сообщение самому себе')
-            return redirect('product_detail', slug=product.slug)
+            return redirect('product_detail_by_id', product_id=product.id)  # Исправлено здесь
         
         # Проверяем, существует ли уже диалог
         conversation, created = Conversation.objects.get_or_create(

@@ -73,26 +73,14 @@
                                         <th>Email:</th>
                                         <td>
                                             {{ user.email }}
-                                            {% if user.profile.email_verified %}
-                                                <span class="badge bg-success">Подтвержден</span>
-                                            {% else %}
-                                                <span class="badge bg-warning text-dark">Не подтвержден</span>
-                                                <a href="{% url 'resend_verification' %}" class="ms-2 small">Подтвердить</a>
-                                            {% endif %}
+    
                                         </td>
                                     </tr>
                                     <tr>
                                         <th>Телефон:</th>
                                         <td>
                                             {{ user.phone_number|default:"Не указано" }}
-                                            {% if user.phone_number %}
-                                                {% if user.profile.phone_verified %}
-                                                    <span class="badge bg-success">Подтвержден</span>
-                                                {% else %}
-                                                    <span class="badge bg-warning text-dark">Не подтвержден</span>
-                                                    <a href="{% url 'verify_phone' %}" class="ms-2 small">Подтвердить</a>
-                                                {% endif %}
-                                            {% endif %}
+                            
                                         </td>
                                     </tr>
                                     <tr>

@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Если диалог не найден, создаем новый
                     localStorage.removeItem('aiConversationId');
                     openAIChat();
-                    return;
+                    return null; // Важно вернуть null, чтобы следующий then не выполнялся
                 }
                 return response.json();
             })
@@ -117,6 +117,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('WebSocket соединение закрыто, код:', e.code, 'причина:', e.reason);
                 // Блокируем кнопку отправки
                 sendAIMessageBtn.disabled = true;
+                
+                // Пытаемся переподключиться через 3 секунды
+                setTimeout(function() {
+                    if (aiAssistantChat.style.display !== 'none') {
+                        connectWebSocket();
+                    }
+                }, 3000);
             };
             
             aiSocket.onerror = function(e) {
@@ -141,42 +148,43 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Функция для отправки сообщения
-    function sendAIMessage() {
-        const message = aiMessageInput.value.trim();
-        if (!message) return;
-        
-        if (aiSocket && aiSocket.readyState === WebSocket.OPEN) {
-            try {
-                // Отображаем сообщение пользователя сразу
-                addMessageToChat(message, 'user-message');
-                
-                // Отправка сообщения через WebSocket
-                aiSocket.send(JSON.stringify({
-                    'message': message
-                }));
-                
-                // Очищаем поле ввода
-                aiMessageInput.value = '';
-                
-                // Прокручиваем до последнего сообщения
-                aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
-            } catch (error) {
-                console.error('Ошибка отправки сообщения:', error);
-                alert('Не удалось отправить сообщение. Пожалуйста, обновите страницу и попробуйте снова.');
-            }
-        } else {
-            console.error('WebSocket не подключен, состояние:', aiSocket ? aiSocket.readyState : 'null');
-            // Пытаемся переподключиться
-            connectWebSocket();
-            setTimeout(function() {
-                if (aiSocket && aiSocket.readyState === WebSocket.OPEN) {
-                    sendAIMessage();
-                } else {
-                    alert('Не удалось подключиться к серверу. Пожалуйста, обновите страницу и попробуйте снова.');
-                }
-            }, 1000);
+function sendAIMessage() {
+    const message = aiMessageInput.value.trim();
+    if (!message) return;
+    
+    if (aiSocket && aiSocket.readyState === WebSocket.OPEN) {
+        try {
+            // Отображаем сообщение пользователя сразу
+            // addMessageToChat(message, 'user-message'); 
+            // Закомментируйте эту строку, так как сообщение будет добавлено после получения от сервера
+            
+            // Отправка сообщения через WebSocket
+            aiSocket.send(JSON.stringify({
+                'message': message
+            }));
+            
+            // Очищаем поле ввода
+            aiMessageInput.value = '';
+            
+            // Прокручиваем до последнего сообщения
+            aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+        } catch (error) {
+            console.error('Ошибка отправки сообщения:', error);
+            alert('Не удалось отправить сообщение. Пожалуйста, обновите страницу и попробуйте снова.');
         }
+    } else {
+        console.error('WebSocket не подключен, состояние:', aiSocket ? aiSocket.readyState : 'null');
+        // Пытаемся переподключиться
+        connectWebSocket();
+        setTimeout(function() {
+            if (aiSocket && aiSocket.readyState === WebSocket.OPEN) {
+                sendAIMessage();
+            } else {
+                alert('Не удалось подключиться к серверу. Пожалуйста, обновите страницу и попробуйте снова.');
+            }
+        }, 1000);
     }
+}
     
     // Функция добавления сообщения в чат
     function addMessageToChat(message, messageClass) {
@@ -241,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Случайные всплывающие подсказки от ИИ
     function showRandomAIHint() {
-        if (aiAssistantChat.style.display === 'none') {
+        if (aiAssistantChat.style.display === 'none' || aiAssistantChat.style.display === '') {
             const hints = [
                 'Привет, нужна помощь?',
                 'Посоветовать что-то?',

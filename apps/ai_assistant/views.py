@@ -36,6 +36,9 @@ def create_conversation(request):
 @login_required
 def get_conversation_history(request, conversation_id):
     try:
+        # Используем модель AIConversation из apps.chat.models
+        from apps.chat.models import AIConversation
+        
         conversation = AIConversation.objects.get(id=conversation_id, user=request.user)
         messages = conversation.messages.all().order_by('created_at')
         

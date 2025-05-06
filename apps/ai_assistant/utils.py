@@ -44,25 +44,30 @@ def chat_with_ai_assistant(user, message, conversation_history=None):
         # Сохранение запроса пользователя
         AISearchQuery.objects.create(user=user, query=message)
         
-        # Создание системного сообщения для определения контекста
-        system_message = """
+        # Для версии 0.3.1 библиотеки google-generativeai
+        # просто используем текстовый промпт
+        prompt = """
         Ты AISha - умный ассистент маркетплейса. Твоя задача - помогать пользователям находить нужные товары,
         отвечать на их вопросы и давать рекомендации. Говори на русском языке, будь дружелюбной,
-        полезной и информативной. Если ты не можешь ответить на вопрос, предложи связаться с продавцом
-        или поддержкой. Старайся быть краткой, но исчерпывающей.
+        полезной и информативной. 
+        
+        Вот история разговора:
         """
         
-        # Подготовка историй сообщений
-        messages = [{"role": "system", "content": system_message}]
-        
+        # Добавляем историю сообщений
         if conversation_history:
             for msg in conversation_history:
-                role = "user" if msg.role == "user" else "model"
-                messages.append({"role": role, "content": msg.content})
+                if msg.role == "user":
+                    prompt += f"\nПользователь: {msg.content}"
+                else:
+                    prompt += f"\nAISha: {msg.content}"
         
-        messages.append({"role": "user", "content": message})
+        # Добавляем текущее сообщение пользователя
+        prompt += f"\nПользователь: {message}\nAISha:"
         
-        response = model.generate_content(messages)
+        # Отправляем запрос к модели
+        response = model.generate_content(prompt)
+        
         return response.text
     except Exception as e:
         logger.error(f"Ошибка в чате с ИИ: {str(e)}")

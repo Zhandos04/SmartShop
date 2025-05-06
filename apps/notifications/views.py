@@ -22,7 +22,8 @@ def mark_as_read(request, notification_id):
     notification.is_read = True
     notification.save()
     
-    if request.is_ajax():
+    # Замена is_ajax() на проверку заголовка
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'status': 'success'})
     
     # Редирект на страницу, указанную в уведомлении, или на список уведомлений
@@ -34,7 +35,8 @@ def mark_as_read(request, notification_id):
 def mark_all_as_read(request):
     Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
     
-    if request.is_ajax():
+    # Вместо is_ajax() проверяем заголовок
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'status': 'success'})
     
     messages.success(request, 'Все уведомления помечены как прочитанные')
@@ -44,7 +46,8 @@ def mark_all_as_read(request):
 def clear_all_notifications(request):
     Notification.objects.filter(user=request.user).delete()
     
-    if request.is_ajax():
+    # Замена is_ajax() на проверку заголовка
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'status': 'success'})
     
     messages.success(request, 'Все уведомления удалены')

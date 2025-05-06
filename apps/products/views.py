@@ -262,7 +262,8 @@ def add_to_wishlist(request):
         added = True
         message = 'Товар добавлен в список желаний'
     
-    if request.is_ajax():
+    # Замена устаревшего is_ajax() на проверку заголовка
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({
             'status': 'success',
             'added': added,
@@ -270,7 +271,7 @@ def add_to_wishlist(request):
         })
     
     messages.success(request, message)
-    return redirect('product_detail', slug=product.slug)
+    return redirect('product_detail_by_id', product_id=product.id)
 
 @login_required
 def wishlist(request):
