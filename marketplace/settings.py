@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'apps.chat',
     'apps.notifications',
     'apps.ai_assistant',
+    'apps.user_activities', 
 ]
 
 MIDDLEWARE = [

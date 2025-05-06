@@ -5,10 +5,11 @@ from django.db.models import Q
 from django.utils import timezone
 from django.core.paginator import Paginator
 
-from .models import AIConversation, AIMessage, AISearchQuery, AIRecommendation
+from .models import AISearchQuery, AIRecommendation
+from apps.chat.models import AIConversation, AIMessage
 from .utils import chat_with_ai_assistant, search_products_with_ai, generate_ai_product_description
-from apps.products.models import Product, Category, UserActivity
-
+from apps.products.models import Product, Category
+from apps.user_activities.models import UserActivity
 import json
 import uuid
 

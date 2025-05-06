@@ -1,14 +1,22 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q, Avg, Count
-from django.http import JsonResponse
+from django.db.models import Q, Avg, Count, Sum
+from django.http import HttpResponseRedirect, JsonResponse
+from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
-from .models import Product, Category, Cart, CartItem, Wishlist, Review, ProductTracking
-from .forms import ReviewForm
+from django.views.generic import CreateView, UpdateView, DeleteView, DetailView  # Добавьте эти классы
+from apps.orders.models import Order  # Добавьте импорт Order
+
+from apps.orders.models import OrderStatus
+from .models import Product, Category, Cart, CartItem, ProductImage, ProductVideo, ReviewImage, Wishlist, Review, ProductTracking
+from .forms import ProductAttributeFormSet, ProductForm, ReviewForm
 from apps.ai_assistant.utils import generate_ai_product_description
 import time
 import json
+from django.views.generic import TemplateView, ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from apps.user_activities.models import UserActivity
 
 def home(request):
     featured_products = Product.objects.filter(status='active').order_by('-created_at')[:8]
@@ -116,7 +124,7 @@ def leave_view_time(request, product_id):
     view_time_start = request.session.get(f'view_time_start_{product_id}')
     if view_time_start:
         view_time = int(time.time() - view_time_start)
-        user_activity, created = request.user.activities.get_or_create(product_id=product_id)
+        user_activity, created = UserActivity.objects.get_or_create(user=request.user, product_id=product_id)
         user_activity.view_time += view_time
         user_activity.save()
         del request.session[f'view_time_start_{product_id}']
@@ -304,6 +312,51 @@ class SellerDashboardMixin:
             messages.error(request, 'У вас нет доступа к панели продавца')
             return redirect('home')
         return super().dispatch(request, *args, **kwargs)
+    
+class SellerDashboardView(LoginRequiredMixin, SellerDashboardMixin, TemplateView):
+    template_name = 'products/seller_dashboard.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Получаем статистику продаж
+        orders = self.request.user.seller_orders.all()
+        completed_orders = orders.filter(status='completed')
+        
+        # Общая статистика
+        context['total_revenue'] = completed_orders.aggregate(
+            total=Sum('total_price'))['total'] or 0
+        context['total_orders'] = completed_orders.count()
+        context['total_products'] = self.request.user.products.filter(
+            status='active').count()
+        
+        # Последние заказы
+        context['recent_orders'] = orders.order_by('-created_at')[:5]
+        
+        # Популярные товары
+        context['popular_products'] = self.request.user.products.annotate(
+            order_count=Count('order_items')).order_by('-order_count')[:3]
+        
+        # Данные для графика продаж (последние 7 дней)
+        from django.utils import timezone
+        import json
+        from datetime import timedelta
+        
+        end_date = timezone.now()
+        start_date = end_date - timedelta(days=7)
+        
+        # Заглушка для данных графика
+        labels = [(start_date + timedelta(days=i)).strftime('%d.%m') 
+                 for i in range(7)]
+        # В реальном проекте здесь будет агрегация по датам
+        values = [0] * 7  # Заполните реальными данными при необходимости
+        
+        context['sales_data'] = json.dumps({
+            'labels': labels,
+            'values': values
+        })
+        
+        return context
 
 @login_required
 def seller_generate_description(request):
@@ -319,3 +372,212 @@ def seller_generate_description(request):
         return JsonResponse({'status': 'success', 'description': description})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
+    
+class SellerProductsView(LoginRequiredMixin, SellerDashboardMixin, ListView):
+    template_name = 'products/seller_product_list.html'
+    context_object_name = 'products'
+    paginate_by = 10
+    
+    def get_queryset(self):
+        queryset = self.request.user.products.all()
+        
+        # Фильтрация по запросу
+        search_query = self.request.GET.get('search')
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) | 
+                Q(description__icontains=search_query)
+            )
+        
+        # Фильтрация по категории
+        category_id = self.request.GET.get('category')
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+        
+        # Фильтрация по статусу
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+        
+        return queryset.order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = Category.objects.all()
+        return context
+    
+class SellerProductCreateView(LoginRequiredMixin, SellerDashboardMixin, CreateView):
+    model = Product
+    template_name = 'products/product_add.html'
+    form_class = ProductForm
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = Category.objects.all()
+        
+        if self.request.POST:
+            context['attribute_formset'] = ProductAttributeFormSet(self.request.POST)
+        else:
+            context['attribute_formset'] = ProductAttributeFormSet()
+        
+        return context
+    
+    def form_valid(self, form):
+        context = self.get_context_data()
+        attribute_formset = context['attribute_formset']
+        
+        if attribute_formset.is_valid():
+            self.object = form.save(commit=False)
+            self.object.seller = self.request.user
+            self.object.save()
+            
+            attribute_formset.instance = self.object
+            attribute_formset.save()
+            
+            # Обработка изображений
+            for image in self.request.FILES.getlist('images'):
+                is_main = not ProductImage.objects.filter(product=self.object).exists()
+                ProductImage.objects.create(
+                    product=self.object,
+                    image=image,
+                    is_main=is_main
+                )
+            
+            # Обработка видео
+            for video in self.request.FILES.getlist('videos'):
+                ProductVideo.objects.create(
+                    product=self.object,
+                    video=video
+                )
+            
+            messages.success(self.request, 'Товар успешно добавлен')
+            return redirect('seller_products')
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
+class SellerProductUpdateView(LoginRequiredMixin, SellerDashboardMixin, UpdateView):
+    model = Product
+    template_name = 'products/product_edit.html'
+    form_class = ProductForm
+    
+    def get_queryset(self):
+        return self.request.user.products.all()
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = Category.objects.all()
+        
+        if self.request.POST:
+            context['attribute_formset'] = ProductAttributeFormSet(
+                self.request.POST, instance=self.object
+            )
+        else:
+            context['attribute_formset'] = ProductAttributeFormSet(instance=self.object)
+        
+        return context
+    
+    def form_valid(self, form):
+        context = self.get_context_data()
+        attribute_formset = context['attribute_formset']
+        
+        if attribute_formset.is_valid():
+            self.object = form.save()
+            attribute_formset.instance = self.object
+            attribute_formset.save()
+            
+            # Обработка новых изображений
+            for image in self.request.FILES.getlist('images'):
+                is_main = not ProductImage.objects.filter(product=self.object).exists()
+                ProductImage.objects.create(
+                    product=self.object,
+                    image=image,
+                    is_main=is_main
+                )
+            
+            # Обработка новых видео
+            for video in self.request.FILES.getlist('videos'):
+                ProductVideo.objects.create(
+                    product=self.object,
+                    video=video
+                )
+            
+            messages.success(self.request, 'Товар успешно обновлен')
+            return redirect('seller_products')
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
+class SellerProductDeleteView(LoginRequiredMixin, SellerDashboardMixin, DeleteView):
+    model = Product
+    template_name = 'products/product_confirm_delete.html'
+    success_url = reverse_lazy('seller_products')
+    
+    def get_queryset(self):
+        return self.request.user.products.all()
+    
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        success_url = self.get_success_url()
+        
+        # Удаляем связанные изображения и видео
+        self.object.images.all().delete()
+        self.object.videos.all().delete()
+        
+        self.object.delete()
+        messages.success(request, 'Товар успешно удален')
+        return HttpResponseRedirect(success_url)
+
+class SellerOrdersView(LoginRequiredMixin, SellerDashboardMixin, ListView):
+    template_name = 'orders/seller_orders.html'
+    context_object_name = 'orders'
+    paginate_by = 10
+    
+    def get_queryset(self):
+        queryset = self.request.user.seller_orders.all()
+        
+        # Фильтрация по статусу
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+        
+        return queryset.order_by('-created_at')
+
+class SellerOrderDetailView(LoginRequiredMixin, SellerDashboardMixin, DetailView):
+    model = Order
+    template_name = 'orders/seller_order_detail.html'
+    context_object_name = 'order'
+    
+    def get_queryset(self):
+        return self.request.user.seller_orders.all()
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['status_updates'] = self.object.status_updates.all().order_by('created_at')
+        return context
+
+class SellerOrderUpdateStatusView(LoginRequiredMixin, SellerDashboardMixin, UpdateView):
+    model = Order
+    template_name = 'orders/seller_order_update_status.html'
+    fields = ['status', 'tracking_number']
+    
+    def get_queryset(self):
+        return self.request.user.seller_orders.all()
+    
+    def form_valid(self, form):
+        # Сохраняем предыдущий статус
+        old_status = self.get_object().status
+        
+        # Сохраняем новый статус
+        self.object = form.save()
+        
+        # Если статус изменился, создаем запись об изменении статуса
+        if old_status != self.object.status:
+            comment = self.request.POST.get('comment', '')
+            OrderStatus.objects.create(
+                order=self.object,
+                status=self.object.status,
+                comment=comment,
+                created_by=self.request.user
+            )
+        
+        messages.success(self.request, 'Статус заказа успешно обновлен')
+        return redirect('seller_order_detail', pk=self.object.pk)

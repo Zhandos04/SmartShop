@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Address, UserActivity
+from .models import CustomUser, Address
+from apps.user_activities.models import UserActivity
 
 class AddressInline(admin.TabularInline):
     model = Address
