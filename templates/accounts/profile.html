@@ -97,13 +97,15 @@
                                     </tr>
                                     <tr>
                                         <th>Роль:</th>
-                                        <td>
-                                            {% if user.is_seller %}
-                                                <span class="badge bg-primary">Продавец</span>
-                                            {% else %}
-                                                <span class="badge bg-info">Покупатель</span>
-                                            {% endif %}
-                                        </td>
+<td>
+    {% if user.role == 'admin' %}
+        <span class="badge bg-danger">Администратор</span>
+    {% elif user.role == 'seller' %}
+        <span class="badge bg-primary">Продавец</span>
+    {% else %}
+        <span class="badge bg-info">Покупатель</span>
+    {% endif %}
+</td>
                                     </tr>
                                     <tr>
                                         <th>Дата регистрации:</th>

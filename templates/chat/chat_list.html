@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои сообщения | Маркетплейс{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <!-- Боковое меню -->
+        <div class="col-md-3 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Личный кабинет</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'profile' %}" class="list-group-item list-group-item-action">Мой профиль</a>
+                    <a href="{% url 'my_orders' %}" class="list-group-item list-group-item-action">Мои заказы</a>
+                    <a href="{% url 'address_list' %}" class="list-group-item list-group-item-action">Адреса доставки</a>
+                    <a href="{% url 'wishlist' %}" class="list-group-item list-group-item-action">Список желаний</a>
+                    <a href="{% url 'notification_list' %}" class="list-group-item list-group-item-action">Уведомления</a>
+                    <a href="{% url 'chat_list' %}" class="list-group-item list-group-item-action active">Сообщения</a>
+                    <a href="{% url 'edit_profile' %}" class="list-group-item list-group-item-action">Редактировать профиль</a>
+                    <a href="{% url 'change_password' %}" class="list-group-item list-group-item-action">Изменить пароль</a>
+                    {% if user.is_seller %}
+                        <a href="{% url 'seller_dashboard' %}" class="list-group-item list-group-item-action">Панель продавца</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Основной контент -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Мои сообщения</h5>
+                </div>
+                <div class="card-body">
+                    {% if conversations %}
+                        <div class="list-group conversation-list">
+                            {% for conversation in conversations %}
+                                <a href="{% url 'chat_detail' conversation.id %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            {% if user == conversation.buyer %}
+                                                <h6 class="mb-1">{{ conversation.seller.username }}</h6>
+                                            {% else %}
+                                                <h6 class="mb-1">{{ conversation.buyer.username }}</h6>
+                                            {% endif %}
+                                            
+                                            {% if conversation.product %}
+                                                <p class="mb-1 small text-muted">Товар: {{ conversation.product.name }}</p>
+                                            {% endif %}
+                                            
+                                            {% if conversation.messages.exists %}
+                                                <p class="mb-0 small text-truncate">
+                                                    {{ conversation.messages.last.content|truncatechars:50 }}
+                                                </p>
+                                            {% else %}
+                                                <p class="mb-0 small text-muted">Нет сообщений</p>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            {% if user == conversation.buyer %}
+                                                {% if conversation.seller.is_online %}
+                                                    <span class="badge bg-success rounded-pill">В сети</span>
+                                                {% endif %}
+                                            {% else %}
+                                                {% if conversation.buyer.is_online %}
+                                                    <span class="badge bg-success rounded-pill">В сети</span>
+                                                {% endif %}
+                                            {% endif %}
+                                            
+                                            <span class="badge bg-light text-dark">
+                                                {{ conversation.updated_at|date:"d.m.Y" }}
+                                            </span>
+                                            
+                                            {% with unread_count=conversation.messages.filter.count %}
+                                                {% if unread_count > 0 %}
+                                                    <span class="badge bg-danger rounded-pill">{{ unread_count }}</span>
+                                                {% endif %}
+                                            {% endwith %}
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-chat-dots" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3">У вас пока нет сообщений</h5>
+                            <p class="text-muted">Вы можете задать вопрос продавцу на странице товара</p>
+                            <a href="{% url 'product_list' %}" class="btn btn-primary mt-3">Перейти к покупкам</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

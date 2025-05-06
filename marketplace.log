@@ -211,3 +211,89 @@ Traceback (most recent call last):
     raise TemplateDoesNotExist(template_name, chain=chain)
 django.template.exceptions.TemplateDoesNotExist: products/cart.html
 ERROR 2025-05-06 20:05:48,062 basehttp "GET /cart/ HTTP/1.0" 500 84123
+WARNING 2025-05-06 20:54:06,297 log Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-05-06 20:54:06,300 basehttp "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.0" 404 7320
+WARNING 2025-05-06 20:54:07,058 log Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-05-06 20:54:07,060 basehttp "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.0" 404 7320
+WARNING 2025-05-06 20:56:43,142 log Not Found: /login
+WARNING 2025-05-06 20:56:43,144 basehttp "GET /login HTTP/1.0" 404 7191
+ERROR 2025-05-06 20:57:11,813 log Internal Server Error: /seller/orders/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/base.py", line 220, in _get_response
+    response = response.render()
+  File "/usr/local/lib/python3.10/site-packages/django/template/response.py", line 114, in render
+    self.content = self.rendered_content
+  File "/usr/local/lib/python3.10/site-packages/django/template/response.py", line 90, in rendered_content
+    template = self.resolve_template(self.template_name)
+  File "/usr/local/lib/python3.10/site-packages/django/template/response.py", line 72, in resolve_template
+    return select_template(template, using=self.using)
+  File "/usr/local/lib/python3.10/site-packages/django/template/loader.py", line 47, in select_template
+    raise TemplateDoesNotExist(", ".join(template_name_list), chain=chain)
+django.template.exceptions.TemplateDoesNotExist: orders/seller_orders.html, orders/order_list.html
+ERROR 2025-05-06 20:57:11,819 basehttp "GET /seller/orders/ HTTP/1.0" 500 80758
+ERROR 2025-05-06 20:59:00,209 log Internal Server Error: /chat/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+  File "/app/apps/chat/views.py", line 20, in chat_list
+    return render(request, 'chat/chat_list.html', {'conversations': conversations})
+  File "/usr/local/lib/python3.10/site-packages/django/shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/usr/local/lib/python3.10/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/usr/local/lib/python3.10/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: chat/chat_list.html
+ERROR 2025-05-06 20:59:00,223 basehttp "GET /chat/ HTTP/1.0" 500 84014
+ERROR 2025-05-06 21:30:22,688 log Internal Server Error: /seller/product/add/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/contrib/auth/mixins.py", line 73, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+  File "/app/apps/products/views.py", line 314, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/views/generic/edit.py", line 180, in get
+    return super().get(request, *args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/views/generic/edit.py", line 144, in get
+    return self.render_to_response(self.get_context_data())
+  File "/app/apps/products/views.py", line 421, in get_context_data
+    context['attribute_formset'] = ProductAttributeFormSet()
+  File "/usr/local/lib/python3.10/site-packages/django/forms/models.py", line 1100, in __init__
+    if self.form._meta.fields and self.fk.name not in self.form._meta.fields:
+AttributeError: type object 'ProductAttributeForm' has no attribute '_meta'
+ERROR 2025-05-06 21:30:22,701 basehttp "GET /seller/product/add/ HTTP/1.0" 500 97672
+ERROR 2025-05-06 21:35:39,922 log Internal Server Error: /seller/product/add/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.10/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/contrib/auth/mixins.py", line 73, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+  File "/app/apps/products/views.py", line 314, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/views/generic/edit.py", line 184, in post
+    return super().post(request, *args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/django/views/generic/edit.py", line 153, in post
+    return self.form_valid(form)
+  File "/app/apps/products/views.py", line 431, in form_valid
+    ProductAttribute.objects.create(
+NameError: name 'ProductAttribute' is not defined
+ERROR 2025-05-06 21:35:39,932 basehttp "POST /seller/product/add/ HTTP/1.0" 500 94145

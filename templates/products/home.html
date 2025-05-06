@@ -40,7 +40,11 @@
                             {% endif %}
                         </div>
                         <div class="card-footer">
-                            <a href="{% url 'product_detail' product.slug %}" class="btn btn-sm btn-outline-primary w-100">Подробнее</a>
+                            {% if product.slug %}
+                                <a href="{% url 'product_detail' product.slug %}" class="btn btn-sm btn-outline-primary w-100">Подробнее</a>
+                            {% else %}
+                                <button class="btn btn-sm btn-outline-secondary w-100" disabled>Товар недоступен</button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -118,7 +122,11 @@
                             {% endif %}
                         </div>
                         <div class="card-footer">
-                            <a href="{% url 'product_detail' product.slug %}" class="btn btn-sm btn-outline-primary w-100">Подробнее</a>
+                            {% if product.slug %}
+                                <a href="{% url 'product_detail' product.slug %}" class="btn btn-sm btn-outline-primary w-100">Подробнее</a>
+                            {% else %}
+                                <button class="btn btn-sm btn-outline-secondary w-100" disabled>Товар недоступен</button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -166,7 +174,11 @@
                             {% endif %}
                         </div>
                         <div class="card-footer">
-                            <a href="{% url 'product_detail' product.slug %}" class="btn btn-sm btn-outline-primary w-100">Подробнее</a>
+                            {% if product.slug %}
+                                <a href="{% url 'product_detail' product.slug %}" class="btn btn-sm btn-outline-primary w-100">Подробнее</a>
+                            {% else %}
+                                <button class="btn btn-sm btn-outline-secondary w-100" disabled>Товар недоступен</button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

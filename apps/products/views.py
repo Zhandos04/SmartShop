@@ -9,7 +9,7 @@ from django.views.generic import CreateView, UpdateView, DeleteView, DetailView 
 from apps.orders.models import Order  # Добавьте импорт Order
 
 from apps.orders.models import OrderStatus
-from .models import Product, Category, Cart, CartItem, ProductImage, ProductVideo, ReviewImage, Wishlist, Review, ProductTracking
+from .models import Product, Category, Cart, CartItem, ProductImage, ProductVideo, ReviewImage, Wishlist, Review, ProductTracking, ProductAttribute
 from .forms import ProductAttributeFormSet, ProductForm, ReviewForm
 from apps.ai_assistant.utils import generate_ai_product_description
 import time
@@ -414,47 +414,45 @@ class SellerProductCreateView(LoginRequiredMixin, SellerDashboardMixin, CreateVi
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['categories'] = Category.objects.all()
-        
-        if self.request.POST:
-            context['attribute_formset'] = ProductAttributeFormSet(self.request.POST)
-        else:
-            context['attribute_formset'] = ProductAttributeFormSet()
-        
         return context
     
     def form_valid(self, form):
-        context = self.get_context_data()
-        attribute_formset = context['attribute_formset']
+        # Сохраняем основную форму товара
+        self.object = form.save(commit=False)
+        self.object.seller = self.request.user
+        self.object.save()
         
-        if attribute_formset.is_valid():
-            self.object = form.save(commit=False)
-            self.object.seller = self.request.user
-            self.object.save()
-            
-            attribute_formset.instance = self.object
-            attribute_formset.save()
-            
-            # Обработка изображений
-            for image in self.request.FILES.getlist('images'):
-                is_main = not ProductImage.objects.filter(product=self.object).exists()
-                ProductImage.objects.create(
+        # Обрабатываем атрибуты товара
+        attribute_names = self.request.POST.getlist('attribute_name[]')
+        attribute_values = self.request.POST.getlist('attribute_value[]')
+        
+        for name, value in zip(attribute_names, attribute_values):
+            if name.strip() and value.strip():
+                ProductAttribute.objects.create(
                     product=self.object,
-                    image=image,
-                    is_main=is_main
+                    name=name.strip(),
+                    value=value.strip()
                 )
-            
-            # Обработка видео
-            for video in self.request.FILES.getlist('videos'):
-                ProductVideo.objects.create(
-                    product=self.object,
-                    video=video
-                )
-            
-            messages.success(self.request, 'Товар успешно добавлен')
-            return redirect('seller_products')
-        else:
-            return self.render_to_response(self.get_context_data(form=form))
-
+        
+        # Обработка изображений
+        for image in self.request.FILES.getlist('images'):
+            is_main = not ProductImage.objects.filter(product=self.object).exists()
+            ProductImage.objects.create(
+                product=self.object,
+                image=image,
+                is_main=is_main
+            )
+        
+        # Обработка видео
+        for video in self.request.FILES.getlist('videos'):
+            ProductVideo.objects.create(
+                product=self.object,
+                video=video
+            )
+        
+        messages.success(self.request, 'Товар успешно добавлен')
+        return redirect('seller_products')
+    
 class SellerProductUpdateView(LoginRequiredMixin, SellerDashboardMixin, UpdateView):
     model = Product
     template_name = 'products/product_edit.html'

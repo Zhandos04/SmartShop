@@ -196,10 +196,18 @@ python manage.py shell -c "
 from django.contrib.auth import get_user_model;
 User = get_user_model();
 if not User.objects.filter(username='admin').exists():
-    User.objects.create_superuser('admin', 'admin@example.com', 'admin123456');
+    user = User.objects.create_superuser('admin', 'admin@example.com', 'admin123456');
+    user.role = 'admin';
+    user.save();
     print('Суперпользователь создан');
 else:
-    print('Суперпользователь уже существует');
+    admin_user = User.objects.get(username='admin');
+    if admin_user.role != 'admin':
+        admin_user.role = 'admin';
+        admin_user.save();
+        print('Роль суперпользователя обновлена до admin');
+    else:
+        print('Суперпользователь уже существует');
 "
 
 # 10. Загружаем начальные данные

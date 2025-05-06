@@ -1,4 +1,3 @@
-# apps/products/forms.py
 from django import forms
 from .models import Review, ReviewImage, Product, ProductImage, ProductVideo, ProductAttribute
 
@@ -26,18 +25,9 @@ class ProductAttributeForm(forms.ModelForm):
         model = ProductAttribute
         fields = ['name', 'value']
 
-class ProductAttributeFormSet(forms.BaseInlineFormSet):
-    def clean(self):
-        super().clean()
-        names = []
-        for form in self.forms:
-            if form.cleaned_data and not form.cleaned_data.get('DELETE'):
-                name = form.cleaned_data.get('name')
-                if name in names:
-                    raise forms.ValidationError("Характеристики с одинаковыми названиями не допускаются.")
-                names.append(name)
-
+# Здесь была ошибка, используем ProductAttributeForm вместо ProductAttributeFormSet
 ProductAttributeFormSet = forms.inlineformset_factory(
-    Product, ProductAttribute, form=ProductAttributeForm, formset=ProductAttributeFormSet,
+    Product, ProductAttribute, 
+    form=ProductAttributeForm,  # Используем ProductAttributeForm вместо ProductAttributeFormSet
     extra=3, can_delete=True
 )
