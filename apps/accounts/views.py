@@ -49,9 +49,15 @@ def register_view(request):
             
             # Генерация токена верификации
             token = get_random_string(64)
-            user.profile.email_verification_token = token
-            user.profile.email_verification_sent = timezone.now()
-            user.profile.save()
+            
+            # Здесь была ошибка - user.profile это не модель Django, не имеет метода save()
+            # Вместо этого, мы можем сохранить токен и время в сессии или создать отдельную запись
+            # в базе данных для хранения токенов, например через модель VerificationToken
+            
+            # Временное решение - сохраняем токен в сессии
+            request.session['email_verification_token'] = token
+            request.session['email_verification_email'] = user.email
+            request.session['email_verification_sent'] = timezone.now().isoformat()
             
             # Отправка письма для подтверждения
             verification_url = f"{request.scheme}://{request.get_host()}/accounts/verify-email/{token}/"

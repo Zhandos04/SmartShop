@@ -26,9 +26,16 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                conversationId = data.conversation_id;
-                localStorage.setItem('aiConversationId', conversationId);
-                connectWebSocket();
+                if (data.status === 'success') {
+                    conversationId = data.conversation_id;
+                    localStorage.setItem('aiConversationId', conversationId);
+                    connectWebSocket();
+                } else {
+                    console.error('Ошибка создания диалога:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка запроса:', error);
             });
         } else {
             // Если ID диалога есть, загружаем историю
@@ -43,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
-                if (data) {
+                if (data && data.status === 'success') {
                     // Очищаем историю сообщений
                     aiChatMessages.innerHTML = '';
                     
@@ -59,41 +66,67 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Подключаемся к WebSocket
                     connectWebSocket();
                 }
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки истории:', error);
+                // При ошибке создаем новый диалог
+                localStorage.removeItem('aiConversationId');
+                openAIChat();
             });
         }
     }
     
     // Подключение к WebSocket
     function connectWebSocket() {
+        if (conversationId === null) {
+            console.error('ID диалога не найден');
+            return;
+        }
+        
         if (aiSocket) {
             aiSocket.close();
         }
         
+        // Протокол зависит от текущего соединения
         const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
         const wsUrl = `${wsProtocol}${window.location.host}/ws/aisha/${conversationId}/`;
         
-        aiSocket = new WebSocket(wsUrl);
-        
-        aiSocket.onopen = function(e) {
-            console.log('WebSocket соединение установлено');
-        };
-        
-        aiSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            const messageClass = data.role === 'user' ? 'user-message' : 'ai-message';
-            addMessageToChat(data.message, messageClass);
+        try {
+            aiSocket = new WebSocket(wsUrl);
             
-            // Прокручиваем до последнего сообщения
-            aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
-        };
-        
-        aiSocket.onclose = function(e) {
-            console.log('WebSocket соединение закрыто');
-        };
-        
-        aiSocket.onerror = function(e) {
-            console.error('WebSocket ошибка:', e);
-        };
+            aiSocket.onopen = function(e) {
+                console.log('WebSocket соединение установлено');
+                // Разблокируем кнопку отправки
+                sendAIMessageBtn.disabled = false;
+            };
+            
+            aiSocket.onmessage = function(e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    const messageClass = data.role === 'user' ? 'user-message' : 'ai-message';
+                    addMessageToChat(data.message, messageClass);
+                    
+                    // Прокручиваем до последнего сообщения
+                    aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+                } catch (error) {
+                    console.error('Ошибка обработки сообщения:', error);
+                }
+            };
+            
+            aiSocket.onclose = function(e) {
+                console.log('WebSocket соединение закрыто, код:', e.code, 'причина:', e.reason);
+                // Блокируем кнопку отправки
+                sendAIMessageBtn.disabled = true;
+            };
+            
+            aiSocket.onerror = function(e) {
+                console.error('WebSocket ошибка:', e);
+                // Блокируем кнопку отправки
+                sendAIMessageBtn.disabled = true;
+            };
+        } catch (error) {
+            console.error('Ошибка создания WebSocket:', error);
+        }
     }
     
     // Функция для закрытия чата с ИИ
@@ -110,14 +143,38 @@ document.addEventListener('DOMContentLoaded', function() {
     // Функция для отправки сообщения
     function sendAIMessage() {
         const message = aiMessageInput.value.trim();
-        if (message && aiSocket && aiSocket.readyState === WebSocket.OPEN) {
-            // Отправка сообщения через WebSocket
-            aiSocket.send(JSON.stringify({
-                'message': message
-            }));
-            
-            // Очищаем поле ввода
-            aiMessageInput.value = '';
+        if (!message) return;
+        
+        if (aiSocket && aiSocket.readyState === WebSocket.OPEN) {
+            try {
+                // Отображаем сообщение пользователя сразу
+                addMessageToChat(message, 'user-message');
+                
+                // Отправка сообщения через WebSocket
+                aiSocket.send(JSON.stringify({
+                    'message': message
+                }));
+                
+                // Очищаем поле ввода
+                aiMessageInput.value = '';
+                
+                // Прокручиваем до последнего сообщения
+                aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+            } catch (error) {
+                console.error('Ошибка отправки сообщения:', error);
+                alert('Не удалось отправить сообщение. Пожалуйста, обновите страницу и попробуйте снова.');
+            }
+        } else {
+            console.error('WebSocket не подключен, состояние:', aiSocket ? aiSocket.readyState : 'null');
+            // Пытаемся переподключиться
+            connectWebSocket();
+            setTimeout(function() {
+                if (aiSocket && aiSocket.readyState === WebSocket.OPEN) {
+                    sendAIMessage();
+                } else {
+                    alert('Не удалось подключиться к серверу. Пожалуйста, обновите страницу и попробуйте снова.');
+                }
+            }, 1000);
         }
     }
     
@@ -146,22 +203,30 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // События
-    openAIChatBtn.addEventListener('click', openAIChat);
-    closeAIChatBtn.addEventListener('click', closeAIChat);
-    sendAIMessageBtn.addEventListener('click', sendAIMessage);
+    if (openAIChatBtn) {
+        openAIChatBtn.addEventListener('click', openAIChat);
+    }
     
-    aiMessageInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            sendAIMessage();
-        }
-    });
+    if (closeAIChatBtn) {
+        closeAIChatBtn.addEventListener('click', closeAIChat);
+    }
+    
+    if (sendAIMessageBtn) {
+        sendAIMessageBtn.addEventListener('click', sendAIMessage);
+    }
+    
+    if (aiMessageInput) {
+        aiMessageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendAIMessage();
+            }
+        });
+    }
     
     // Периодически проверяем, не завершена ли сессия
     setInterval(function() {
-        if (aiSocket && aiSocket.readyState !== WebSocket.OPEN) {
-            if (aiAssistantChat.style.display !== 'none') {
-                connectWebSocket();
-            }
+        if (aiAssistantChat.style.display !== 'none' && aiSocket && aiSocket.readyState !== WebSocket.OPEN) {
+            connectWebSocket();
         }
     }, 5000);
     
@@ -191,20 +256,23 @@ document.addEventListener('DOMContentLoaded', function() {
             hintElement.style.cursor = 'pointer';
             
             // Добавляем подсказку на страницу
-            document.querySelector('.ai-assistant-wrapper').appendChild(hintElement);
-            
-            // По клику на подсказку открываем чат
-            hintElement.addEventListener('click', function() {
-                openAIChat();
-                hintElement.remove();
-            });
-            
-            // Удаляем подсказку через 5 секунд
-            setTimeout(() => {
-                if (hintElement.parentNode) {
+            const aiWrapper = document.querySelector('.ai-assistant-wrapper');
+            if (aiWrapper) {
+                aiWrapper.appendChild(hintElement);
+                
+                // По клику на подсказку открываем чат
+                hintElement.addEventListener('click', function() {
+                    openAIChat();
                     hintElement.remove();
-                }
-            }, 5000);
+                });
+                
+                // Удаляем подсказку через 5 секунд
+                setTimeout(() => {
+                    if (hintElement.parentNode) {
+                        hintElement.remove();
+                    }
+                }, 5000);
+            }
         }
     }
     

@@ -16,73 +16,9 @@ echo "Директория для статических файлов созда
 # Собираем статические файлы
 python manage.py collectstatic --noinput
 
-# 1. Создаем и настраиваем приложение user_activities, если его еще нет
-if [ ! -d "/app/apps/user_activities" ]; then
-  echo "Создаем новое приложение user_activities..."
-  mkdir -p /app/apps/user_activities/migrations
-  touch /app/apps/user_activities/migrations/__init__.py
-  
-  # Создаем базовые файлы приложения
-  cat > /app/apps/user_activities/__init__.py << 'EOF'
-default_app_config = 'apps.user_activities.apps.UserActivitiesConfig'
-EOF
-
-  cat > /app/apps/user_activities/apps.py << 'EOF'
-from django.apps import AppConfig
-
-class UserActivitiesConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'apps.user_activities'
-    verbose_name = 'Активности пользователей'
-EOF
-
-  cat > /app/apps/user_activities/models.py << 'EOF'
-from django.db import models
-from django.utils.translation import gettext_lazy as _
-from django.conf import settings
-
-class UserActivity(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='activities')
-    product = models.ForeignKey('products.Product', on_delete=models.CASCADE, related_name='user_activities')
-    view_time = models.IntegerField(_('Время просмотра (сек)'), default=0)
-    view_count = models.IntegerField(_('Количество просмотров'), default=1)
-    last_viewed = models.DateTimeField(_('Последний просмотр'), auto_now=True)
-    
-    class Meta:
-        verbose_name = _('Активность пользователя')
-        verbose_name_plural = _('Активности пользователей')
-        unique_together = ('user', 'product')
-EOF
-
-  cat > /app/apps/user_activities/admin.py << 'EOF'
-from django.contrib import admin
-from .models import UserActivity
-
-class UserActivityAdmin(admin.ModelAdmin):
-    list_display = ('user', 'product', 'view_count', 'view_time', 'last_viewed')
-    list_filter = ('last_viewed',)
-    search_fields = ('user__username', 'product__name')
-
-admin.site.register(UserActivity, UserActivityAdmin)
-EOF
-
-  # 2. Удаляем класс UserActivity из accounts/models.py
-  echo "Удаляем UserActivity из accounts/models.py..."
-  sed -i '/class UserActivity/,/unique_together/{/class UserActivity/d;/unique_together/!d;}' /app/apps/accounts/models.py
-
-  # 3. Добавляем приложение в INSTALLED_APPS
-  echo "Добавляем приложение в settings.py..."
-  sed -i "/'apps.ai_assistant',/a\    'apps.user_activities'," /app/marketplace/settings.py
-fi
-
-# 4. Исправляем импорты во всех файлах
-echo "Исправляем импорты UserActivity во всех файлах..."
-find /app -type f -name "*.py" -exec sed -i 's/from apps.accounts.models import UserActivity/from apps.user_activities.models import UserActivity/g' {} \;
-find /app -type f -name "*.py" -exec sed -i 's/from apps.accounts.models import \(.*\), UserActivity/from apps.accounts.models import \1\nfrom apps.user_activities.models import UserActivity/g' {} \;
-
-# 5. Удаляем существующие миграции, чтобы начать с чистого листа
-echo "Удаляем существующие миграции для предотвращения конфликтов..."
-find /app/apps -path "*/migrations/*.py" -not -name "__init__.py" -delete
+# # 5. Удаляем существующие миграции, чтобы начать с чистого листа
+# echo "Удаляем существующие миграции для предотвращения конфликтов..."
+# find /app/apps -path "*/migrations/*.py" -not -name "__init__.py" -delete
 
 # 6. Создаем пустые начальные миграции с правильными зависимостями
 echo "Создаем начальные миграции для разрыва циклической зависимости..."
