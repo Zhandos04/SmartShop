@@ -92,7 +92,11 @@
                                                         </div>
                                                     {% endif %}
                                                 </div>
-                                                <a href="{% url 'product_detail' product.slug %}" target="_blank">{{ product.name }}</a>
+                                                {% if product.slug %}
+                                                    <a href="{% url 'product_detail' product.slug %}" target="_blank">{{ product.name }}</a>
+                                                {% else %}
+                                                    <span>{{ product.name }}</span>
+                                                {% endif %}
                                             </div>
                                         </td>
                                         <td>{{ product.category.name }}</td>

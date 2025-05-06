@@ -205,6 +205,46 @@ def remove_from_cart(request, item_id):
     messages.success(request, 'Товар удалён из корзины')
     return redirect('cart')
 
+def product_detail_by_id(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    reviews = product.reviews.all().order_by('-created_at')
+    related_products = Product.objects.filter(category=product.category).exclude(id=product.id)[:4]
+    
+    # Запись времени активности пользователя
+    if request.user.is_authenticated:
+        view_time_start = request.session.get(f'view_time_start_{product.id}')
+        if not view_time_start:
+            request.session[f'view_time_start_{product.id}'] = time.time()
+        
+        # Обновление счетчика просмотров и активности
+        user_activity, created = request.user.activities.get_or_create(product=product)
+        if not created:
+            user_activity.view_count += 1
+            user_activity.save()
+    
+    # Форма отзыва
+    form = ReviewForm()
+    can_review = False
+    has_reviewed = False
+    
+    if request.user.is_authenticated:
+        # Проверка, купил ли пользователь товар
+        has_purchased = request.user.orders.filter(
+            items__product=product, status='completed'
+        ).exists()
+        can_review = has_purchased
+        has_reviewed = Review.objects.filter(product=product, user=request.user).exists()
+    
+    context = {
+        'product': product,
+        'reviews': reviews,
+        'related_products': related_products,
+        'form': form,
+        'can_review': can_review,
+        'has_reviewed': has_reviewed,
+    }
+    return render(request, 'products/product_detail.html', context)
+
 @login_required
 @require_POST
 def add_to_wishlist(request):

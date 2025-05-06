@@ -223,6 +223,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Добавляем обработчик для формы отправки (если вдруг форма есть)
+    const chatForm = document.querySelector('#aiAssistantChat form');
+    if (chatForm) {
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            sendAIMessage();
+        });
+    }
+    
     // Периодически проверяем, не завершена ли сессия
     setInterval(function() {
         if (aiAssistantChat.style.display !== 'none' && aiSocket && aiSocket.readyState !== WebSocket.OPEN) {

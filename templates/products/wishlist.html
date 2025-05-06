@@ -68,7 +68,7 @@
                                             {% endif %}
                                         </div>
                                         <div class="card-footer d-flex justify-content-between">
-                                            <a href="{% url 'product_detail' product.slug %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
+                                            <a href="{% url 'product_detail_by_id' product.id %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
                                             <div>
                                                 <form action="{% url 'add_to_cart' %}" method="post" class="d-inline">
                                                     {% csrf_token %}
