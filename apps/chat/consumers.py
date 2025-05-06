@@ -3,8 +3,6 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from .models import Conversation, Message
-from apps.notifications.models import Notification
-from apps.ai_assistant.utils import chat_with_ai_assistant
 
 User = get_user_model()
 
@@ -49,28 +47,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = text_data_json['message']
         
         conversation = await self.get_conversation()
-        
-        # Если первое сообщение от покупателя, сначала отправляем ответ ИИ
-        if message_type == 'text' and self.user.is_buyer() and not await self.has_messages_in_conversation():
-            # Получаем ответ от ИИ
-            ai_response = await database_sync_to_async(chat_with_ai_assistant)(self.user, message)
-            
-            # Сохраняем ответ ИИ и отправляем его
-            ai_message = await self.save_message(conversation, message_type='ai', content=ai_response)
-            
-            # Отправляем ответ ИИ в группу
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'chat_message',
-                    'message': ai_response,
-                    'message_type': 'ai',
-                    'sender_id': None,
-                    'sender_username': 'AISha',
-                    'message_id': ai_message.id,
-                    'timestamp': ai_message.created_at.isoformat()
-                }
-            )
         
         # Сохраняем сообщение пользователя
         user_message = await self.save_message(conversation, message_type, message)
@@ -117,11 +93,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return Conversation.objects.get(id=self.conversation_id)
     
     @database_sync_to_async
-    def has_messages_in_conversation(self):
-        conversation = Conversation.objects.get(id=self.conversation_id)
-        return conversation.messages.filter(message_type='text').exists()
-    
-    @database_sync_to_async
     def save_message(self, conversation, message_type, content):
         return Message.objects.create(
             conversation=conversation,
@@ -133,11 +104,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def mark_messages_as_read(self):
         conversation = Conversation.objects.get(id=self.conversation_id)
+        # Исправляем метод, чтобы он правильно помечал сообщения как прочитанные
         return Message.objects.filter(
             conversation=conversation, 
-            sender__id__ne=self.user.id, 
             is_read=False
-        ).update(is_read=True)
+        ).exclude(sender=self.user).update(is_read=True)
     
     @database_sync_to_async
     def get_recipient(self):
@@ -148,6 +119,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     
     @database_sync_to_async
     def create_notification(self, recipient, message):
+        from apps.notifications.models import Notification
         return Notification.objects.create(
             user=recipient,
             notification_type='chat_message',

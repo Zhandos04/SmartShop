@@ -10,29 +10,57 @@ from apps.accounts.models import CustomUser
 
 @login_required
 def chat_list(request):
-    # Получаем все диалоги пользователя
-    conversations = Conversation.objects.filter(
+    # Получаем все диалоги пользователя (как покупателя, так и продавца)
+    user_conversations = Conversation.objects.filter(
         Q(buyer=request.user) | Q(seller=request.user)
     ).annotate(
         last_message_time=Max('messages__created_at')
     ).order_by('-last_message_time')
     
-    return render(request, 'chat/chat_list.html', {'conversations': conversations})
+    # Разделяем по типу участия пользователя
+    buyer_conversations = []
+    seller_conversations = []
+    
+    for conversation in user_conversations:
+        # Пропускаем диалоги без сообщений
+        if not conversation.messages.exists():
+            continue
+            
+        # Определяем непрочитанные сообщения
+        unread_count = conversation.messages.filter(
+            is_read=False
+        ).exclude(sender=request.user).count()
+        
+        # Получаем последнее сообщение
+        last_message = conversation.messages.order_by('-created_at').first()
+        
+        # Добавляем дополнительные атрибуты
+        conversation.unread_count = unread_count
+        conversation.last_message = last_message
+        
+        if conversation.buyer == request.user:
+            buyer_conversations.append(conversation)
+        else:
+            seller_conversations.append(conversation)
+    
+    context = {
+        'buyer_conversations': buyer_conversations,
+        'seller_conversations': seller_conversations
+    }
+    return render(request, 'chat/chat_list.html', context)
 
 @login_required
 def chat_detail(request, conversation_id):
     # Проверяем, принадлежит ли чат пользователю
-    # ПРАВИЛЬНО:
     queryset = Conversation.objects.filter(Q(buyer=request.user) | Q(seller=request.user))
     conversation = get_object_or_404(queryset, id=conversation_id)
     # Получаем сообщения
     messages = conversation.messages.all().order_by('created_at')
     
-    # Помечаем непрочитанные сообщения как прочитанные
+    # Помечаем непрочитанные сообщения как прочитанные - исправленная версия
     conversation.messages.filter(
-        ~Q(sender=request.user),
         is_read=False
-    ).update(is_read=True)
+    ).exclude(sender=request.user).update(is_read=True)
     
     # Получаем информацию о собеседнике
     if conversation.buyer == request.user:

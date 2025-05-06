@@ -3121,3 +3121,6 @@ WARNING 2025-05-06 22:46:15,217 log Not Found: /aisha/get_conversation_history/1
 WARNING 2025-05-06 22:46:15,218 basehttp "GET /aisha/get_conversation_history/1/ HTTP/1.0" 404 120
 WARNING 2025-05-06 22:46:15,273 log Not Found: /aisha/get_conversation_history/1/
 WARNING 2025-05-06 22:46:15,273 basehttp "GET /aisha/get_conversation_history/1/ HTTP/1.0" 404 120
+WARNING 2025-05-06 23:17:06,419 log Not Found: /leave-view-time//
+WARNING 2025-05-06 23:20:32,067 log Not Found: /leave-view-time//
+WARNING 2025-05-06 23:20:32,069 basehttp "POST /leave-view-time// HTTP/1.0" 404 7242
