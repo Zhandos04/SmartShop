@@ -54,10 +54,12 @@ def chat_detail(request, conversation_id):
     # Проверяем, принадлежит ли чат пользователю
     queryset = Conversation.objects.filter(Q(buyer=request.user) | Q(seller=request.user))
     conversation = get_object_or_404(queryset, id=conversation_id)
-    # Получаем сообщения
-    messages = conversation.messages.all().order_by('created_at')
     
-    # Помечаем непрочитанные сообщения как прочитанные - исправленная версия
+    # Получаем сообщения без использования distinct() с id
+    # Для PostgreSQL
+    messages = conversation.messages.all().order_by('id', 'created_at').distinct('id')
+    
+    # Помечаем непрочитанные сообщения как прочитанные
     conversation.messages.filter(
         is_read=False
     ).exclude(sender=request.user).update(is_read=True)
